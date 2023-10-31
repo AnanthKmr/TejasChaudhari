@@ -104,31 +104,116 @@
 
 # if __name__ == '__main__':
 #     pytest.main()
+
+
+
+
+#
+#
+# import pytest
+# from unittest.mock import patch, Mock
+#
+# import requests
+# from Pokeapi import get_pokemon_info
+#
+#
+# @pytest.fixture
+# def mock_requests_get():
+#     with patch('requests.get') as mock_get:
+#         yield mock_get
+#
+#
+# def test_successful_request(mock_requests_get, capsys):
+#     expected_output = """Name: pikachu
+# ID: 25
+# Height: 4
+# Weight: 60
+# Abilities:
+# - static
+# - lightning-rod"""
+#
+#     response = Mock()
+#     response.status_code = 200
+#     response.json.return_value = {
+#         "name": "pikachu",
+#         "id": 25,
+#         "height": 4,
+#         "weight": 60,
+#         "abilities": [{"ability": {"name": "static"}}, {"ability": {"name": "lightning-rod"}}]
+#     }
+#
+#     mock_requests_get.return_value = response
+#
+#     get_pokemon_info("pikachu")
+#     captured = capsys.readouterr()
+#     assert captured.out.strip() == expected_output
+#
+#
+# def test_failed_request(mock_requests_get, capsys):
+#     expected_output = "Failed to retrieve Pokemon information. Status code: 404"
+#
+#     response = Mock()
+#     response.status_code = 404
+#     mock_requests_get.return_value = response
+#
+#     get_pokemon_info("pikachu")
+#     captured = capsys.readouterr()
+#     assert captured.out.strip() == expected_output
+#
+#
+# def test_no_name_found(capsys):
+#     expected_output = "Pokemon name cannot be empty."
+#
+#     get_pokemon_info("")
+#     captured = capsys.readouterr()
+#     assert captured.out.strip() == expected_output
+#
+#
+# def test_non_json_response(mock_requests_get, capsys):
+#     expected_output = "Failed to retrieve Pokemon information. Invalid JSON"
+#
+#     response = Mock()
+#     response.status_code = 200
+#     response.json.side_effect = ValueError("Invalid JSON")
+#
+#     mock_requests_get.return_value = response
+#
+#     get_pokemon_info("pikachu")
+#     captured = capsys.readouterr()
+#     assert captured.out.strip() == expected_output
+#
+#
+# def test_connection_error(mock_requests_get, capsys):
+#     expected_output = "Failed to retrieve Pokemon information. Connection error"
+#
+#     mock_requests_get.side_effect = requests.exceptions.RequestException("Connection error")
+#
+#     get_pokemon_info("mewtwo")
+#     captured = capsys.readouterr()
+#     assert captured.out.strip() == expected_output
+#
+#
+# if __name__ == '__main__':
+#     pytest.main()
+
+
+
+# ********Working********
 import pytest
 from unittest.mock import patch, Mock
-
-import requests
-from Pokeapi import get_pokemon_info
+from Pokeapi import PokemonInfoRetriever
 
 
 @pytest.fixture
-def mock_requests_get():
-    with patch('requests.get') as mock_get:
+def mock_pokemon_info_retriever():
+    mock_get = Mock()
+    with patch('Pokeapi.requests.get', return_value=mock_get):
         yield mock_get
 
 
-def test_successful_request(mock_requests_get, capsys):
-    expected_output = """Name: pikachu
-ID: 25
-Height: 4
-Weight: 60
-Abilities:
-- static
-- lightning-rod"""
-
-    response = Mock()
-    response.status_code = 200
-    response.json.return_value = {
+def test_successful_request(mock_pokemon_info_retriever):
+    mock_pokemon_info_retriever.status_code = 200
+    mock_pokemon_info_retriever.json.return_value = {
         "name": "pikachu",
         "id": 25,
         "height": 4,
@@ -136,56 +221,145 @@ Abilities:
         "abilities": [{"ability": {"name": "static"}}, {"ability": {"name": "lightning-rod"}}]
     }
 
-    mock_requests_get.return_value = response
+    pokemon_info_retriever = PokemonInfoRetriever('pikachu')
+    response = pokemon_info_retriever.get_pokemon_info()
 
-    get_pokemon_info("pikachu")
-    captured = capsys.readouterr()
-    assert captured.out.strip() == expected_output
-
-
-def test_failed_request(mock_requests_get, capsys):
-    expected_output = "Failed to retrieve Pokemon information. Status code: 404"
-
-    response = Mock()
-    response.status_code = 404
-    mock_requests_get.return_value = response
-
-    get_pokemon_info("mewtwo")
-    captured = capsys.readouterr()
-    assert captured.out.strip() == expected_output
+    assert response.status_code == mock_pokemon_info_retriever.status_code
+    assert response.json() == mock_pokemon_info_retriever.json.return_value
 
 
-def test_no_name_found(capsys):
-    expected_output = "Pokemon name cannot be empty."
+def test_failed_request(mock_pokemon_info_retriever):
+    mock_pokemon_info_retriever.status_code = 404
 
-    get_pokemon_info("")
-    captured = capsys.readouterr()
-    assert captured.out.strip() == expected_output
+    pokemon_info_retriever = PokemonInfoRetriever('pikachu')
+    response = pokemon_info_retriever.get_pokemon_info()
 
-
-def test_non_json_response(mock_requests_get, capsys):
-    expected_output = "Failed to retrieve Pokemon information. Invalid JSON"
-
-    response = Mock()
-    response.status_code = 200
-    response.json.side_effect = ValueError("Invalid JSON")
-
-    mock_requests_get.return_value = response
-
-    get_pokemon_info("charizard")
-    captured = capsys.readouterr()
-    assert captured.out.strip() == expected_output
+    assert response.status_code == 404
 
 
-def test_connection_error(mock_requests_get, capsys):
-    expected_output = "Failed to retrieve Pokemon information. Connection error"
+def test_empty_pokemon_name():
+    pokemon_info_retriever = PokemonInfoRetriever('')
+    response = pokemon_info_retriever.get_pokemon_info()
 
-    mock_requests_get.side_effect = requests.exceptions.RequestException("Connection error")
+    assert response.status_code == 200
+def test_invalid_pokemon_name(mock_pokemon_info_retriever):
+    mock_pokemon_info_retriever.status_code = 404
+    mock_pokemon_info_retriever.json.return_value = {
+        "detail": "Not Found."
+    }
 
-    get_pokemon_info("mewtwo")
-    captured = capsys.readouterr()
-    assert captured.out.strip() == expected_output
+    pokemon_info_retriever = PokemonInfoRetriever('invalidpokemon')
+    response = pokemon_info_retriever.get_pokemon_info()
+
+    assert response.status_code == 404
 
 
-if __name__ == '__main__':
-    pytest.main()
+def test_request_exception(mock_pokemon_info_retriever):
+    mock_pokemon_info_retriever.side_effect = Exception("Test exception")
+    mock_pokemon_info_retriever.status_code = 500
+
+    pokemon_info_retriever = PokemonInfoRetriever('pikachu')
+    response = pokemon_info_retriever.get_pokemon_info()
+
+    assert response.status_code == 500
+
+
+def test_unknown_error(mock_pokemon_info_retriever):
+    mock_pokemon_info_retriever.side_effect = ValueError("Unknown error")
+    mock_pokemon_info_retriever.status_code = 500
+
+    pokemon_info_retriever = PokemonInfoRetriever('pikachu')
+    response = pokemon_info_retriever.get_pokemon_info()
+
+    assert response.status_code == 500
+
+# import pytest
+# from unittest.mock import patch, Mock
+# from Pokeapi import PokemonInfoRetriever
+#
+#
+# @pytest.fixture
+# def mock_pokemon_info_retriever():
+#     mock_get = Mock()
+#     with patch('Pokeapi.requests.get', return_value=mock_get):
+#         yield mock_get
+#
+#
+# def test_successful_request(mock_pokemon_info_retriever):
+#     mock_pokemon_info_retriever.status_code = 200
+#     mock_pokemon_info_retriever.json.return_value = {
+#         "name": "pikachu",
+#         "id": 25,
+#         "height": 4,
+#         "weight": 60,
+#         "abilities": [{"ability": {"name": "static"}}, {"ability": {"name": "lightning-rod"}}]
+#     }
+#
+#     pokemon_info_retriever = PokemonInfoRetriever('pikachu')
+#     response = pokemon_info_retriever.get_pokemon_info()
+#
+#     assert response.status_code == 200
+#     assert response.json() == {
+#         "name": "pikachu",
+#         "id": 25,
+#         "height": 4,
+#         "weight": 60,
+#         "abilities": [{"ability": {"name": "static"}}, {"ability": {"name": "lightning-rod"}}]
+#     }
+#
+#
+# def test_failed_request(mock_pokemon_info_retriever):
+#     mock_pokemon_info_retriever.status_code = 404
+#
+#     pokemon_info_retriever = PokemonInfoRetriever('pikachu')
+#     response = pokemon_info_retriever.get_pokemon_info()
+#
+#     assert response.status_code == 404
+#
+#
+# def test_empty_pokemon_name(mock_pokemon_info_retriever):
+#     mock_pokemon_info_retriever.status_code = 200
+#     mock_pokemon_info_retriever.json.return_value = {
+#         "name": "pikachu",
+#         "id": 25,
+#         "height": 4,
+#         "weight": 60,
+#         "abilities": [{"ability": {"name": "static"}}, {"ability": {"name": "lightning-rod"}}]
+#     }
+#
+#     pokemon_info_retriever = PokemonInfoRetriever('')
+#     response = pokemon_info_retriever.get_pokemon_info()
+#
+#     assert response.status_code == 200
+#
+#
+# def test_invalid_pokemon_name(mock_pokemon_info_retriever):
+#     mock_pokemon_info_retriever.status_code = 404
+#     mock_pokemon_info_retriever.json.return_value = {
+#         "detail": "Not Found."
+#     }
+#
+#     pokemon_info_retriever = PokemonInfoRetriever('invalidpokemon')
+#     response = pokemon_info_retriever.get_pokemon_info()
+#
+#     assert response.status_code == 404
+#
+#
+# def test_request_exception(mock_pokemon_info_retriever):
+#     mock_pokemon_info_retriever.side_effect = Exception("Test exception")
+#     mock_pokemon_info_retriever.status_code = 500
+#
+#     pokemon_info_retriever = PokemonInfoRetriever('pikachu')
+#     response = pokemon_info_retriever.get_pokemon_info()
+#
+#     assert response.status_code == 500
+#
+#
+# def test_unknown_error(mock_pokemon_info_retriever):
+#     mock_pokemon_info_retriever.side_effect = ValueError("Unknown error")
+#     mock_pokemon_info_retriever.status_code = 500
+#
+#     pokemon_info_retriever = PokemonInfoRetriever('pikachu')
+#     response = pokemon_info_retriever.get_pokemon_info()
+#
+#     assert response.status_code == 500
