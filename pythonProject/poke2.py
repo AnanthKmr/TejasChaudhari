@@ -3,13 +3,13 @@ from Pokeapi import PokemonInfoRetriever
 
 def main():
     while True:
-        pokemon_name = input("Enter the name of the Pokémon (or type 'exit' to quit): ")
+        pokemon_name = input("Enter the name of the Pokemon (or type 'exit' to quit): ")
 
         if pokemon_name.lower() == 'exit':
             break
 
         if not pokemon_name:
-            print("Please provide a Pokémon name.")
+            print("Please provide a Pokemon name.")
             continue
 
         pokemon_info_retriever = PokemonInfoRetriever(pokemon_name)
