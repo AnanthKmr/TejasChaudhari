@@ -162,11 +162,18 @@ import requests
 
 class ExchangeRateFetcher:
     def __init__(self, api_key):
-        self.api_key = api_key
+        self.api_key = "ybH5SHckJKrkM9Ln0oYpBKlKhr55kPI8"
+        self.base_url = "https://api.apilayer.com/exchangerates_data"
+
+    def api_key(self):
+        return self.api_key
+    def base_url(self):
+        return self.base_url
 
     def get_exchange_rates(self, base_currency):
         if not base_currency:
             return "Please enter a valid base currency."
+
         url = f"https://api.apilayer.com/exchangerates_data/latest?base={base_currency}"
         headers = {
             "apikey": self.api_key,

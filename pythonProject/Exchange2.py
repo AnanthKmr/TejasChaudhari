@@ -19,9 +19,9 @@ if __name__ == "__main__":
                 print(f"{currency}: {rate}")
         elif exchange_rate_data == "Authentication error":
             print("Authentication error. Invalid API key.")
-        elif exchange_rate_data == "Failed to retrieve exchange rate information. Status code: 404":
-            print("Failed to retrieve exchange rate information. Status code: 404")
+        elif exchange_rate_data == "Failed to retrieve exchange rate information. Status code: 400":
+            print("Failed to retrieve exchange rate information. Status code: 400")
         elif exchange_rate_data == "No exchange rate data found.":
             print("No exchange rate data found.")
         else:
-            print("Invalid base currency or unsupported currency.")
+            print("Invalid base currency.")
