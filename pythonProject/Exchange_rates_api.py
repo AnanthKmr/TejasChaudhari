@@ -157,24 +157,22 @@
 #             return f"Failed to retrieve exchange rate information. Error: {str(e)}"
 #         except ValueError as e:
 #             return f"Failed to retrieve exchange rate information. Invalid JSON response: {str(e)}"
+
+
 import requests
 
 
 class ExchangeRateFetcher:
     def __init__(self, api_key):
-        self.api_key = "ybH5SHckJKrkM9Ln0oYpBKlKhr55kPI8"
+        self.api_key = api_key
         self.base_url = "https://api.apilayer.com/exchangerates_data"
 
-    def api_key(self):
-        return self.api_key
-    def base_url(self):
-        return self.base_url
 
     def get_exchange_rates(self, base_currency):
         if not base_currency:
-            return "Please enter a valid base currency."
+            return "Invalid base currency."
 
-        url = f"https://api.apilayer.com/exchangerates_data/latest?base={base_currency}"
+        url = f"{self.base_url}/latest?base={base_currency}"
         headers = {
             "apikey": self.api_key,
         }
@@ -189,5 +187,66 @@ class ExchangeRateFetcher:
             return "Failed to retrieve exchange rate information. Status code: 404"
         elif response.status_code == 204:
             return "No exchange rate data found."
+        elif response.status_code == 400:
+            return "Invalid base currency."
         else:
             return f"Failed to retrieve exchange rate information. Status code: {response.status_code}"
+
+    def get_currency_conversion(self, from_currency, to_currency, amount):
+        if not from_currency or not to_currency:
+            return "Invalid currency conversion request."
+
+        url = f"{self.base_url}/convert?from={from_currency}&to={to_currency}&amount={amount}"
+        headers = {
+            "apikey": self.api_key,
+        }
+
+        response = requests.get(url, headers=headers)
+
+        if response.status_code == 200:
+            conversion_data = response.json()
+            return conversion_data
+
+        # Handle other status codes here
+        elif response.status_code == 401:
+            return "Authentication error"
+        elif response.status_code == 404:
+            return "Failed to retrieve currency conversion information. Status code: 404"
+        elif response.status_code == 201:
+            return "No currency conversion data found."
+        elif response.status_code == 400:
+            return "No currency conversion data found."
+        else:
+            return f"Failed to retrieve currency conversion information. Status code: {response.status_code}"
+
+
+
+def retrieve_exchange_rates(base_currency, api_key):
+    fetcher = ExchangeRateFetcher(api_key)
+    return fetcher.get_exchange_rates(base_currency)
+
+
+if __name__ == "__main__":
+    api_key = "ybH5SHckJKrkM9Ln0oYpBKlKhr55kPI8"
+    while True:
+        base_currency = input("Enter the base currency (e.g., USD, EUR) or type 'EXIT' to exit: ").upper()
+        if base_currency == "EXIT":
+            break
+
+        exchange_rate_data = retrieve_exchange_rates(base_currency, api_key)
+
+        if exchange_rate_data == "Authentication error":
+            print("Authentication error. Invalid API key.")
+        elif exchange_rate_data == "Failed to retrieve exchange rate information. Status code: 404":
+            print("Failed to retrieve exchange rate information. Status code: 404")
+        elif exchange_rate_data == "No exchange rate data found.":
+            print("No exchange rate data found.")
+        elif exchange_rate_data == "Failed to retrieve exchange rate information. Status code: 400":
+            print("Failed to retrieve exchange rate information. Status code: 400")
+        elif "rates" in exchange_rate_data:
+            rates = exchange_rate_data["rates"]
+            print(f"Exchange rates for {base_currency}:")
+            for currency, rate in rates.items():
+                print(f"{currency}: {rate}")
+        else:
+            print("Invalid base currency.")
