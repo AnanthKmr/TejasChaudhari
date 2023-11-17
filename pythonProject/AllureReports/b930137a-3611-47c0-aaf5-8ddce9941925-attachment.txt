@@ -1,0 +1,2 @@
+Get User by ID Response:
+{'code': 200, 'meta': None, 'data': {'id': 5715679, 'name': 'Updated Test User', 'email': 'updated.test.user@example.com', 'gender': 'male', 'status': 'inactive'}}
