@@ -1,0 +1,4 @@
+Update User Response:
+{'code': 200, 'meta': None, 'data': {'email': 'updated.test.user@example.com', 'name': 'Updated Test User', 'gender': 'male', 'status': 'inactive', 'id': 5758971}}
+Get User by ID After Update:
+{'code': 200, 'meta': None, 'data': {'id': 5758971, 'name': 'Updated Test User', 'email': 'updated.test.user@example.com', 'gender': 'male', 'status': 'inactive'}}
